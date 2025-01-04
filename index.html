@@ -3,133 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Missing Letter Game</title>
+    <title>Memory Game</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .hidden-letter {
-            display: inline-block;
-            width: 40px;
-            height: 40px;
-            text-align: center;
-            line-height: 38px;
-            margin: 0 5px;
-            border: 2px solid #0d6efd;
-            border-radius: 8px;
-            font-size: 24px;
-            font-weight: bold;
-            background-color: #f8f9fa;
-        }
-        .game-container {
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+        }
+        .memory-card {
+            aspect-ratio: 1;
+            background-color: #2196F3;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: transform 0.3s;
+        }
+        .memory-card.flipped {
+            transform: rotateY(180deg);
+            background-color: white;
+            border: 2px solid #2196F3;
+        }
+        .memory-card.matched {
+            background-color: #4CAF50;
+            cursor: default;
         }
     </style>
 </head>
 <body class="bg-light">
-    <div class="game-container">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h1 class="text-center mb-4 text-primary">Missing Letter Game</h1>
-                
-                <div class="alert alert-info" role="alert">
-                    <i class="bi bi-info-circle"></i> Guess the hidden word by entering one letter at a time!
-                </div>
-
-                <div id="word-container" class="text-center mb-4 p-3 bg-white rounded"></div>
-
-                <div class="row justify-content-center mb-4">
-                    <div class="col-auto">
-                        <div class="input-group">
-                            <input type="text" id="guess" class="form-control form-control-lg" maxlength="1" 
-                                   placeholder="Enter a letter" autofocus style="width: 80px;">
-                            <button class="btn btn-primary btn-lg" onclick="makeGuess()">
-                                Guess
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="message" class="alert alert-success text-center mb-3" style="display: none;"></div>
-                
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="attempts-left badge bg-warning text-dark p-2">
-                        Attempts left: <span id="attempts-left" class="fs-5">5</span>
-                    </div>
-                    <div id="invalid-feedback" class="text-danger"></div>
-                </div>
-            </div>
+    <div class="container py-5">
+        <div class="text-center mb-4">
+            <h1>Memory Game</h1>
+            <p class="mb-3">Moves: <span id="moves">0</span> | Pairs Found: <span id="pairs">0</span></p>
+            <button id="restart" class="btn btn-primary mb-4">New Game</button>
         </div>
+        <div class="card-grid" id="game-board"></div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
-        const words = ["apple", "banana", "grape", "orange", "peach"];
-        let word = words[Math.floor(Math.random() * words.length)];
-        let revealedWord = word.split('').map(letter => '_');
-        let attempts = 5;
-        let guessedLetters = [];
+        const emojis = ['🐶', '🐱', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯'];
+        let cards = [...emojis, ...emojis];
+        let flippedCards = [];
+        let moves = 0;
+        let pairs = 0;
+        let canFlip = true;
 
-        function updateWordDisplay() {
-            const wordContainer = document.getElementById('word-container');
-            wordContainer.innerHTML = '';
-            revealedWord.forEach(letter => {
-                const letterDiv = document.createElement('div');
-                letterDiv.className = 'hidden-letter';
-                letterDiv.textContent = letter;
-                wordContainer.appendChild(letterDiv);
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createBoard() {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            shuffle(cards);
+            
+            cards.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.className = 'memory-card';
+                card.dataset.value = emoji;
+                card.dataset.index = index;
+                card.onclick = () => flipCard(card);
+                gameBoard.appendChild(card);
             });
         }
 
-        function makeGuess() {
-            const guess = document.getElementById('guess').value.toLowerCase();
-            const invalidFeedback = document.getElementById('invalid-feedback');
-            const messageElement = document.getElementById('message');
-            
-            messageElement.style.display = 'none';
-            invalidFeedback.textContent = '';
-
-            if (guess.length !== 1 || !/[a-z]/.test(guess)) {
-                invalidFeedback.textContent = "Please enter a valid letter (a-z).";
+        function flipCard(card) {
+            if (!canFlip || card.classList.contains('flipped') || card.classList.contains('matched')) {
                 return;
             }
 
-            if (guessedLetters.includes(guess)) {
-                invalidFeedback.textContent = "You've already guessed this letter!";
-                return;
-            }
+            card.classList.add('flipped');
+            card.textContent = card.dataset.value;
+            flippedCards.push(card);
 
-            guessedLetters.push(guess);
+            if (flippedCards.length === 2) {
+                moves++;
+                document.getElementById('moves').textContent = moves;
+                canFlip = false;
 
-            let correctGuess = false;
-            for (let i = 0; i < word.length; i++) {
-                if (word[i] === guess && revealedWord[i] === '_') {
-                    revealedWord[i] = guess;
-                    correctGuess = true;
+                if (flippedCards[0].dataset.value === flippedCards[1].dataset.value) {
+                    flippedCards.forEach(card => {
+                        card.classList.add('matched');
+                        card.classList.remove('flipped');
+                    });
+                    pairs++;
+                    document.getElementById('pairs').textContent = pairs;
+                    flippedCards = [];
+                    canFlip = true;
+
+                    if (pairs === emojis.length) {
+                        setTimeout(() => {
+                            alert(`Congratulations! You won in ${moves} moves!`);
+                        }, 500);
+                    }
+                } else {
+                    setTimeout(() => {
+                        flippedCards.forEach(card => {
+                            card.classList.remove('flipped');
+                            card.textContent = '';
+                        });
+                        flippedCards = [];
+                        canFlip = true;
+                    }, 1000);
                 }
-            }
-
-            if (!correctGuess) {
-                attempts--;
-            }
-
-            updateWordDisplay();
-            document.getElementById('guess').value = '';
-            document.getElementById('guess').focus();
-            document.getElementById('attempts-left').textContent = attempts;
-
-            if (revealedWord.join('') === word) {
-                messageElement.textContent = "Congratulations! You've guessed the word!";
-                messageElement.className = 'alert alert-success text-center mb-3';
-                messageElement.style.display = 'block';
-            } else if (attempts === 0) {
-                messageElement.textContent = "Game over! The word was: " + word;
-                messageElement.className = 'alert alert-danger text-center mb-3';
-                messageElement.style.display = 'block';
             }
         }
 
-        updateWordDisplay();
+        function restartGame() {
+            moves = 0;
+            pairs = 0;
+            flippedCards = [];
+            document.getElementById('moves').textContent = '0';
+            document.getElementById('pairs').textContent = '0';
+            createBoard();
+        }
+
+        document.getElementById('restart').onclick = restartGame;
+        createBoard();
     </script>
 </body>
 </html>
