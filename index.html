@@ -4,135 +4,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Missing Letter Game</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
         .hidden-letter {
             display: inline-block;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             text-align: center;
-            line-height: 30px;
+            line-height: 38px;
             margin: 0 5px;
-            border: 1px solid #000;
-            font-size: 20px;
-        }
-        .message {
-            margin-top: 20px;
+            border: 2px solid #0d6efd;
+            border-radius: 8px;
+            font-size: 24px;
             font-weight: bold;
+            background-color: #f8f9fa;
         }
-        .button-container {
-            margin-top: 20px;
-        }
-        input {
-            padding: 5px;
-            font-size: 16px;
-            width: 50px;
-            text-align: center;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-        }
-        .attempts-left {
-            margin-top: 20px;
-        }
-        .invalid-feedback {
-            color: red;
-            font-size: 14px;
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
         }
     </style>
 </head>
-<body>
+<body class="bg-light">
+    <div class="game-container">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="text-center mb-4 text-primary">Missing Letter Game</h1>
+                
+                <div class="alert alert-info" role="alert">
+                    <i class="bi bi-info-circle"></i> Guess the hidden word by entering one letter at a time!
+                </div>
 
-<h1>Welcome to the Missing Letter Game!</h1>
-<p>Guess the word:</p>
-<div id="word-container"></div>
+                <div id="word-container" class="text-center mb-4 p-3 bg-white rounded"></div>
 
-<div class="button-container">
-    <input type="text" id="guess" maxlength="1" placeholder="Enter a letter" autofocus>
-    <button onclick="makeGuess()">Guess</button>
-</div>
+                <div class="row justify-content-center mb-4">
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <input type="text" id="guess" class="form-control form-control-lg" maxlength="1" 
+                                   placeholder="Enter a letter" autofocus style="width: 80px;">
+                            <button class="btn btn-primary btn-lg" onclick="makeGuess()">
+                                Guess
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-<p id="message" class="message"></p>
-<p class="attempts-left">Attempts left: <span id="attempts-left">5</span></p>
-<p id="invalid-feedback" class="invalid-feedback"></p>
+                <div id="message" class="alert alert-success text-center mb-3" style="display: none;"></div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="attempts-left badge bg-warning text-dark p-2">
+                        Attempts left: <span id="attempts-left" class="fs-5">5</span>
+                    </div>
+                    <div id="invalid-feedback" class="text-danger"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script>
-    const words = ["apple", "banana", "grape", "orange", "peach"];  // List of words
-    let word = words[Math.floor(Math.random() * words.length)];  // Random word from list
-    let revealedWord = word.split('').map(letter => '_');  // Hidden letters initialized to "_"
-    let attempts = 5;  // Number of attempts
-    let guessedLetters = [];  // Array to keep track of guessed letters
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const words = ["apple", "banana", "grape", "orange", "peach"];
+        let word = words[Math.floor(Math.random() * words.length)];
+        let revealedWord = word.split('').map(letter => '_');
+        let attempts = 5;
+        let guessedLetters = [];
 
-    // Function to display the current state of the word
-    function updateWordDisplay() {
-        const wordContainer = document.getElementById('word-container');
-        wordContainer.innerHTML = '';  // Clear previous display
-        revealedWord.forEach(letter => {
-            const letterDiv = document.createElement('div');
-            letterDiv.className = 'hidden-letter';
-            letterDiv.textContent = letter;
-            wordContainer.appendChild(letterDiv);
-        });
-    }
-
-    // Function to handle the user's guess
-    function makeGuess() {
-        const guess = document.getElementById('guess').value.toLowerCase();  // Get the guessed letter
-        const invalidFeedback = document.getElementById('invalid-feedback');
-        
-        // Clear previous invalid feedback
-        invalidFeedback.textContent = '';
-
-        // Check for valid input
-        if (guess.length !== 1 || !/[a-z]/.test(guess)) {
-            invalidFeedback.textContent = "Please enter a valid letter (a-z).";
-            return;
+        function updateWordDisplay() {
+            const wordContainer = document.getElementById('word-container');
+            wordContainer.innerHTML = '';
+            revealedWord.forEach(letter => {
+                const letterDiv = document.createElement('div');
+                letterDiv.className = 'hidden-letter';
+                letterDiv.textContent = letter;
+                wordContainer.appendChild(letterDiv);
+            });
         }
 
-        // Check for repeated guess
-        if (guessedLetters.includes(guess)) {
-            invalidFeedback.textContent = "You've already guessed this letter!";
-            return;
-        }
+        function makeGuess() {
+            const guess = document.getElementById('guess').value.toLowerCase();
+            const invalidFeedback = document.getElementById('invalid-feedback');
+            const messageElement = document.getElementById('message');
+            
+            messageElement.style.display = 'none';
+            invalidFeedback.textContent = '';
 
-        // Add guess to the list of guessed letters
-        guessedLetters.push(guess);
+            if (guess.length !== 1 || !/[a-z]/.test(guess)) {
+                invalidFeedback.textContent = "Please enter a valid letter (a-z).";
+                return;
+            }
 
-        let correctGuess = false;
-        for (let i = 0; i < word.length; i++) {
-            if (word[i] === guess && revealedWord[i] === '_') {
-                revealedWord[i] = guess;  // Reveal the guessed letter
-                correctGuess = true;
+            if (guessedLetters.includes(guess)) {
+                invalidFeedback.textContent = "You've already guessed this letter!";
+                return;
+            }
+
+            guessedLetters.push(guess);
+
+            let correctGuess = false;
+            for (let i = 0; i < word.length; i++) {
+                if (word[i] === guess && revealedWord[i] === '_') {
+                    revealedWord[i] = guess;
+                    correctGuess = true;
+                }
+            }
+
+            if (!correctGuess) {
+                attempts--;
+            }
+
+            updateWordDisplay();
+            document.getElementById('guess').value = '';
+            document.getElementById('guess').focus();
+            document.getElementById('attempts-left').textContent = attempts;
+
+            if (revealedWord.join('') === word) {
+                messageElement.textContent = "Congratulations! You've guessed the word!";
+                messageElement.className = 'alert alert-success text-center mb-3';
+                messageElement.style.display = 'block';
+            } else if (attempts === 0) {
+                messageElement.textContent = "Game over! The word was: " + word;
+                messageElement.className = 'alert alert-danger text-center mb-3';
+                messageElement.style.display = 'block';
             }
         }
 
-        if (!correctGuess) {
-            attempts--;  // Reduce attempts if the guess was wrong
-        }
-
-        updateWordDisplay();  // Update the word display
-        document.getElementById('guess').value = '';  // Clear the input field
-        document.getElementById('guess').focus();  // Focus back to the input field
-        document.getElementById('attempts-left').textContent = attempts;  // Update attempts left
-
-        // Check if the player has guessed the word or is out of attempts
-        if (revealedWord.join('') === word) {
-            document.getElementById('message').textContent = "Congratulations! You've guessed the word!";
-        } else if (attempts === 0) {
-            document.getElementById('message').textContent = "Game over! The word was: " + word;
-        } else {
-            document.getElementById('message').textContent = "";
-        }
-    }
-
-    // Initialize the game
-    updateWordDisplay();
-</script>
-
+        updateWordDisplay();
+    </script>
 </body>
 </html>
